@@ -652,37 +652,37 @@ class LetAISendEmojisPlugin(Star):
         """深度分析AI回复的情感和内容，返回精准的情感标签"""
         reply_lower = ai_reply.lower()
         
-        # 更精准的情感分析模式 - 基于语义而非单纯关键词
+        # 更精准的情感分析模式 - 清理了在角色扮演场景容易误判的关键词
         emotion_patterns = {
             # 积极情感
             "happy_excited": {
-                "keywords": ["哈哈", "开心", "高兴", "快乐", "太好了", "棒", "赞", "笑", "嘻嘻", "太棒了", "amazing", "wow", "激动", "兴奋", "厉害", "牛逼", "绝了"],
+                "keywords": ["哈哈", "开心", "高兴", "快乐", "太好了", "棒", "赞", "嘻嘻", "太棒了", "激动", "兴奋", "厉害", "绝了"],
                 "weight": 2.0
             },
             "friendly_warm": {
-                "keywords": ["你好", "欢迎", "很高兴", "谢谢", "不客气", "希望", "祝", "关心", "温暖", "陪伴"],
+                "keywords": ["你好", "欢迎", "很高兴", "谢谢", "不客气", "希望", "祝", "温暖", "陪伴"],
                 "weight": 1.5
             },
             "cute_playful": {
-                "keywords": ["可爱", "萌", "么么", "mua", "小可爱", "乖", "软萌", "调皮", "淘气", "嘿嘿", "逗", "搞怪", "～", "~", "嘿嘿", "啦", "呀", "哟"],
+                "keywords": ["可爱", "萌", "么么", "mua", "小可爱", "乖", "调皮", "淘气", "嘿嘿", "搞怪", "撒娇"],
                 "weight": 2.0
             },
             
             # 关怀情感
             "caring_gentle": {
-                "keywords": ["要注意", "小心", "多休息", "保重", "记得", "别忘了", "照顾", "温柔", "慢慢", "不要着急", "别担心", "没关系"],
+                "keywords": ["要注意", "多休息", "保重", "记得", "别忘了", "照顾", "温柔", "不要着急", "别担心", "没关系", "抱抱", "心疼"],
                 "weight": 1.8
             },
             
             # 认知情感
             "thinking_wise": {
-                "keywords": ["我觉得", "分析", "考虑", "思考", "建议", "或许", "可能", "应该", "经验", "学习", "明白", "理解"],
+                "keywords": ["我觉得", "分析", "考虑", "思考", "建议", "或许", "应该", "明白", "理解"],
                 "weight": 1.2
             },
             
             # 惊讶好奇
             "surprised_curious": {
-                "keywords": ["哇", "真的吗", "没想到", "惊讶", "意外", "竟然", "原来", "好奇", "想知道", "有趣", "为什么", "怎么", "探索"],
+                "keywords": ["哇", "真的吗", "没想到", "惊讶", "意外", "竟然", "原来", "好奇", "有趣"],
                 "weight": 1.6
             },
             
@@ -692,39 +692,39 @@ class LetAISendEmojisPlugin(Star):
                 "weight": 1.5
             },
             
-            # 特定主题
+            # 特定主题 - 降低权重，要求更精确的关键词
             "food_related": {
-                "keywords": ["吃", "美食", "饿", "香", "好吃", "味道", "料理", "烹饪", "餐厅", "菜", "饭"],
-                "weight": 2.5
+                "keywords": ["吃饭", "美食", "饿了", "好吃", "料理", "烹饪", "餐厅", "干饭"],
+                "weight": 1.5
             },
             "sleep_tired": {
-                "keywords": ["睡", "困", "休息", "累", "梦", "床", "被子", "打哈欠"],
-                "weight": 2.5
+                "keywords": ["睡觉", "困了", "休息", "累了", "打哈欠", "晚安"],
+                "weight": 1.5
             },
             "work_study": {
-                "keywords": ["工作", "学习", "任务", "完成", "专注", "效率", "上班", "考试", "作业"],
-                "weight": 2.0
+                "keywords": ["工作", "学习", "任务", "完成", "专注", "上班", "考试", "作业"],
+                "weight": 1.5
             },
             "gaming": {
-                "keywords": ["游戏", "玩", "通关", "技能", "战斗", "冒险", "娱乐", "开黑", "上分"],
-                "weight": 2.5
+                "keywords": ["游戏", "通关", "开黑", "上分", "打游戏", "玩游戏"],
+                "weight": 1.5
             },
             
             # 道歉谦虚
             "apologetic": {
-                "keywords": ["对不起", "抱歉", "不好意思", "sorry", "打扰", "麻烦", "我还在学习", "可能不够", "尽力"],
+                "keywords": ["对不起", "抱歉", "不好意思", "sorry", "道歉"],
                 "weight": 1.8
             },
             
             # 困惑
             "confused": {
-                "keywords": ["不太明白", "疑惑", "困惑", "不确定", "可能需要", "不知道", "搞不懂"],
+                "keywords": ["不太明白", "疑惑", "困惑", "不确定", "不知道", "搞不懂"],
                 "weight": 1.5
             },
             
             # 感谢
             "grateful": {
-                "keywords": ["感谢", "谢谢", "感激", "感恩", "appreciate", "thanks"],
+                "keywords": ["感谢", "谢谢", "感激", "感恩"],
                 "weight": 1.5
             }
         }
@@ -863,45 +863,37 @@ class LetAISendEmojisPlugin(Star):
         return await self.search_and_download_anime_emoji(primary_keywords, secondary_keywords, anime_categories, ai_emotion)
     
     async def search_local_emojis(self, primary_keywords, secondary_keywords, anime_categories):
-        """在本地已下载的表情包中搜索（使用 name + keywords 匹配）"""
+        """在本地已下载的表情包中搜索（使用 name + keywords 匹配，无匹配则不发）"""
         local_perfect = []  # 主要关键词匹配
         local_good = []     # 次要关键词匹配
-        local_fallback = [] # 无匹配兜底池
 
         for emoji in self.emoji_data:
             local_path = emoji.get("local_path")
             if not local_path or not os.path.exists(local_path):
-                continue  # 只检查本地已存在的文件
+                continue
 
             emoji_name = emoji.get("name", "").lower()
-            # 使用 keywords 字段作为搜索文本（兼容列表或字符串格式）
             emoji_keywords = emoji.get("keywords", [])
             if isinstance(emoji_keywords, list):
                 emoji_keywords_str = " ".join(emoji_keywords).lower()
             else:
                 emoji_keywords_str = str(emoji_keywords).lower()
 
-            # 搜索文本 = 名字 + keywords
             search_text = f"{emoji_name} {emoji_keywords_str}"
 
-            # 主要关键词匹配
             primary_match = any(keyword in search_text for keyword in primary_keywords)
-            # 次要关键词匹配
             secondary_match = any(keyword in search_text for keyword in secondary_keywords)
 
             if primary_match:
-                local_perfect.extend([emoji] * 3)  # 3倍权重
+                local_perfect.extend([emoji] * 3)
             elif secondary_match:
-                local_good.extend([emoji] * 2)      # 2倍权重
-            else:
-                local_fallback.append(emoji)         # 兜底
+                local_good.extend([emoji] * 2)
 
-        # 按优先级返回本地表情包
-        all_local_candidates = local_perfect + local_good + local_fallback
+        # 只从匹配到的表情包中选择
+        all_local_candidates = local_perfect + local_good
 
-        # 只要有1个候选就使用本地表情包
-        if len(all_local_candidates) < 1:
-            logger.info(f"本地表情包数量不足({len(all_local_candidates)}<1)，强制在线下载新表情包")
+        if not all_local_candidates:
+            logger.info("没有匹配的本地表情包，跳过发送")
             return None
 
         selected = None
@@ -919,18 +911,12 @@ class LetAISendEmojisPlugin(Star):
                 selected = random.choice(filtered)
                 selection_type = "次关键词匹配"
 
-        if not selected and local_fallback:
-            filtered = self.filter_recently_used(local_fallback)
-            if filtered:
-                selected = random.choice(filtered)
-                selection_type = "兜底随机"
-
         if selected:
             self.add_to_recent_used(selected)
             logger.info(f"{selection_type} - {selected.get('name')}")
             return selected
         else:
-            logger.info("本地表情包过滤后无可选项，强制在线下载新表情包")
+            logger.info("匹配的表情包都最近用过了，跳过发送")
             return None
     
     async def search_and_download_anime_emoji(self, primary_keywords, secondary_keywords, anime_categories, ai_emotion):
