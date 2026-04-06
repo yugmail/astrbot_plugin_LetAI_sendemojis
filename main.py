@@ -847,20 +847,15 @@ class LetAISendEmojisPlugin(Star):
         primary_keywords = mapping["primary"]
         secondary_keywords = mapping["secondary"]
         
-        # 已禁用强制跳过本地搜索，优先使用本地自定义表情包
-        force_download = False
+        # 只在本地已下载的表情包中搜索，没匹配到就不发
+        local_matches = await self.search_local_emojis(primary_keywords, secondary_keywords, anime_categories)
+        if local_matches:
+            logger.info("使用本地表情包")
+            return local_matches
         
-        if not force_download:
-            # 第一步：在已下载的本地文件中搜索（优先二次元）
-            local_matches = await self.search_local_emojis(primary_keywords, secondary_keywords, anime_categories)
-            if local_matches:
-                logger.info("使用本地表情包")
-                return local_matches
-        else:
-            logger.info("强制多样性模式：跳过本地搜索，直接下载新表情包")
-            
-        # 第二步：在完整数据源中搜索二次元表情包，找到后立即下载
-        return await self.search_and_download_anime_emoji(primary_keywords, secondary_keywords, anime_categories, ai_emotion)
+        # 本地没匹配到，不发表情包
+        logger.info("没有合适的表情包，跳过发送")
+        return None
     
     async def search_local_emojis(self, primary_keywords, secondary_keywords, anime_categories):
         """在本地已下载的表情包中搜索（使用 name + keywords 匹配，无匹配则不发）"""
