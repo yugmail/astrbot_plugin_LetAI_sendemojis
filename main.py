@@ -664,7 +664,7 @@ class LetAISendEmojisPlugin(Star):
                 "weight": 1.5
             },
             "cute_playful": {
-                "keywords": ["可爱", "萌", "么么", "mua", "小可爱", "乖", "调皮", "淘气", "嘿嘿", "搞怪", "撒娇"],
+                "keywords": ["可爱", "萌", "么么", "mua", "小可爱", "乖", "调皮", "淘气", "嘿嘿", "搞怪", "撒娇", "得意", "坏笑", "得瑟"],
                 "weight": 2.0
             },
             
@@ -694,7 +694,7 @@ class LetAISendEmojisPlugin(Star):
             
             # 特定主题 - 降低权重，要求更精确的关键词
             "food_related": {
-                "keywords": ["吃饭", "美食", "饿了", "好吃", "料理", "烹饪", "餐厅", "干饭"],
+                "keywords": ["吃饭", "美食", "饿了", "好吃", "料理", "烹饪", "餐厅", "干饭", "馋", "嘴馋", "想吃"],
                 "weight": 1.5
             },
             "sleep_tired": {
