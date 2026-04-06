@@ -1,4 +1,4 @@
-# AstrBot LetAI 智能表情包插件
+（自用fork）# AstrBot LetAI 智能表情包插件
 
 让AI智能分析对话内容并发送合适表情包的AstrBot插件。
 
