@@ -726,6 +726,18 @@ class LetAISendEmojisPlugin(Star):
             "grateful": {
                 "keywords": ["感谢", "谢谢", "感激", "感恩"],
                 "weight": 1.5
+            },
+            
+            # 伤心难过（适配RP场景）
+            "sad_hurt": {
+                "keywords": ["难过", "伤心", "心疼", "哭", "泪", "痛", "碎", "崩溃", "绝望", "荒芜", "沉默", "颤抖", "窒息", "呜咽", "抽泣"],
+                "weight": 2.0
+            },
+            
+            # 生气愤怒（适配RP场景）
+            "angry_intense": {
+                "keywords": ["生气", "愤怒", "怒", "狠", "咬牙", "杀气", "阴郁", "狠戾", "冷", "威胁", "霸道"],
+                "weight": 1.8
             }
         }
         
@@ -765,11 +777,9 @@ class LetAISendEmojisPlugin(Star):
             logger.info(f"AI情感分析结果: {top_emotion} (分数: {emotion_scores[top_emotion]:.2f})")
             return top_emotion
         else:
-            # 随机返回一些基础情感，避免总是"neutral"
-            fallback_emotions = ["friendly_warm", "cute_playful", "happy_excited", "thinking_wise"]
-            selected = random.choice(fallback_emotions)
-            logger.info(f"AI情感分析: 未识别特定情感，随机使用: {selected}")
-            return selected
+            # 未识别到情感，返回 None，不发表情包
+            logger.info("AI情感分析: 未识别特定情感，跳过表情包发送")
+            return None
     
     async def search_emoji_by_emotion(self, ai_emotion: str, ai_reply_text: str):
         """基于AI回复内容的主题精准搜索匹配的表情包（优先二次元，优先本地）"""
@@ -835,6 +845,14 @@ class LetAISendEmojisPlugin(Star):
             "grateful": {
                 "primary": ["感谢", "谢谢", "感激", "感恩", "thanks", "多谢"],
                 "secondary": ["好", "棒", "爱了", "感动"]
+            },
+            "sad_hurt": {
+                "primary": ["难过", "伤心", "哭", "委屈", "崩溃", "心疼", "可怜", "呜呜"],
+                "secondary": ["痛", "泪", "碎", "安慰", "抱抱"]
+            },
+            "angry_intense": {
+                "primary": ["生气", "不满", "烦", "吐槽", "抱怨"],
+                "secondary": ["怒", "狠", "冷", "凶"]
             }
         }
         
