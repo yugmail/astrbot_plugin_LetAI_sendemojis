@@ -863,93 +863,73 @@ class LetAISendEmojisPlugin(Star):
         return await self.search_and_download_anime_emoji(primary_keywords, secondary_keywords, anime_categories, ai_emotion)
     
     async def search_local_emojis(self, primary_keywords, secondary_keywords, anime_categories):
-        """在本地已下载的表情包中搜索（优先二次元）"""
-        local_perfect = []  # 本地二次元+主要关键词
-        local_good = []     # 本地二次元+次要关键词
-        local_anime = []    # 本地二次元表情包
-        local_other = []    # 本地其他匹配
-        
+        """在本地已下载的表情包中搜索（使用 name + keywords 匹配）"""
+        local_perfect = []  # 主要关键词匹配
+        local_good = []     # 次要关键词匹配
+        local_fallback = [] # 无匹配兜底池
+
         for emoji in self.emoji_data:
             local_path = emoji.get("local_path")
             if not local_path or not os.path.exists(local_path):
                 continue  # 只检查本地已存在的文件
-                
+
             emoji_name = emoji.get("name", "").lower()
-            emoji_category = emoji.get("category", "").lower()
-            
-            # 检查是否为二次元表情包（更智能的匹配算法）
-            is_anime = self.is_anime_emoji(emoji_name, emoji_category, anime_categories)
-            
-            # 检查关键词匹配（更智能的匹配逻辑）
-            search_text = f"{emoji_name} {emoji_category}".lower()
-            
+            # 使用 keywords 字段作为搜索文本（兼容列表或字符串格式）
+            emoji_keywords = emoji.get("keywords", [])
+            if isinstance(emoji_keywords, list):
+                emoji_keywords_str = " ".join(emoji_keywords).lower()
+            else:
+                emoji_keywords_str = str(emoji_keywords).lower()
+
+            # 搜索文本 = 名字 + keywords
+            search_text = f"{emoji_name} {emoji_keywords_str}"
+
             # 主要关键词匹配
             primary_match = any(keyword in search_text for keyword in primary_keywords)
-            
             # 次要关键词匹配
             secondary_match = any(keyword in search_text for keyword in secondary_keywords)
-            
-            # 从文件名中提取情感线索（文件名通常包含描述信息）
-            name_emotions = self.extract_emotion_from_filename(emoji_name)
-            emotion_enhanced_match = any(emotion in primary_keywords + secondary_keywords 
-                                       for emotion in name_emotions)
-            
-            # 分类存储（优先二次元，二次元表情包有多重优先级）
-            if is_anime and (primary_match or emotion_enhanced_match):
-                # 二次元+完美匹配，添加多次增加权重
-                local_perfect.extend([emoji] * 3)  # 增加3倍权重
-            elif is_anime and secondary_match:
-                # 二次元+良好匹配，添加2次增加权重
-                local_good.extend([emoji] * 2)
-            elif is_anime:
-                # 纯二次元表情包，添加1.5倍权重
-                local_anime.extend([emoji] * 2)
-            elif primary_match or secondary_match or emotion_enhanced_match:
-                local_other.append(emoji)
-        
-        # 按优先级返回本地表情包，并过滤最近使用过的
-        all_local_candidates = local_perfect + local_good + local_anime + local_other
-        
-        # 降低门槛：只要有1个候选就使用本地表情包（适配小型自定义表情包库）
+
+            if primary_match:
+                local_perfect.extend([emoji] * 3)  # 3倍权重
+            elif secondary_match:
+                local_good.extend([emoji] * 2)      # 2倍权重
+            else:
+                local_fallback.append(emoji)         # 兜底
+
+        # 按优先级返回本地表情包
+        all_local_candidates = local_perfect + local_good + local_fallback
+
+        # 只要有1个候选就使用本地表情包
         if len(all_local_candidates) < 1:
             logger.info(f"本地表情包数量不足({len(all_local_candidates)}<1)，强制在线下载新表情包")
             return None
-        
+
         selected = None
         selection_type = ""
-        
+
         if local_perfect:
-            # 过滤最近使用的表情包
-            filtered_perfect = self.filter_recently_used(local_perfect)
-            if filtered_perfect:  # 确保过滤后还有可选项
-                selected = random.choice(filtered_perfect)
-                selection_type = "本地完美匹配: 二次元+主题关键词"
-        
+            filtered = self.filter_recently_used(local_perfect)
+            if filtered:
+                selected = random.choice(filtered)
+                selection_type = "主关键词匹配"
+
         if not selected and local_good:
-            filtered_good = self.filter_recently_used(local_good)
-            if filtered_good:
-                selected = random.choice(filtered_good)
-                selection_type = "本地良好匹配: 二次元+相关关键词"
-        
-        if not selected and local_anime:
-            filtered_anime = self.filter_recently_used(local_anime)
-            if filtered_anime:
-                selected = random.choice(filtered_anime)
-                selection_type = "本地二次元表情包"
-        
-        if not selected and local_other:
-            filtered_other = self.filter_recently_used(local_other)
-            if filtered_other:
-                selected = random.choice(filtered_other)
-                selection_type = "本地其他匹配"
-            
+            filtered = self.filter_recently_used(local_good)
+            if filtered:
+                selected = random.choice(filtered)
+                selection_type = "次关键词匹配"
+
+        if not selected and local_fallback:
+            filtered = self.filter_recently_used(local_fallback)
+            if filtered:
+                selected = random.choice(filtered)
+                selection_type = "兜底随机"
+
         if selected:
-            # 添加到使用历史
             self.add_to_recent_used(selected)
             logger.info(f"{selection_type} - {selected.get('name')}")
             return selected
         else:
-            # 本地表情包过滤后没有可选项，强制在线下载
             logger.info("本地表情包过滤后无可选项，强制在线下载新表情包")
             return None
     
