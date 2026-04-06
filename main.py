@@ -876,15 +876,11 @@ class LetAISendEmojisPlugin(Star):
         return None
     
     async def search_local_emojis(self, primary_keywords, secondary_keywords, anime_categories):
-        """在本地已下载的表情包中搜索（使用 name + keywords 匹配，无匹配则不发）"""
+        """在表情包中搜索匹配项（使用 name + keywords 匹配，找到后自动下载）"""
         local_perfect = []  # 主要关键词匹配
         local_good = []     # 次要关键词匹配
 
         for emoji in self.emoji_data:
-            local_path = emoji.get("local_path")
-            if not local_path or not os.path.exists(local_path):
-                continue
-
             emoji_name = emoji.get("name", "").lower()
             emoji_keywords = emoji.get("keywords", [])
             if isinstance(emoji_keywords, list):
@@ -903,10 +899,10 @@ class LetAISendEmojisPlugin(Star):
                 local_good.extend([emoji] * 2)
 
         # 只从匹配到的表情包中选择
-        all_local_candidates = local_perfect + local_good
+        all_candidates = local_perfect + local_good
 
-        if not all_local_candidates:
-            logger.info("没有匹配的本地表情包，跳过发送")
+        if not all_candidates:
+            logger.info("没有匹配的表情包，跳过发送")
             return None
 
         selected = None
@@ -925,6 +921,14 @@ class LetAISendEmojisPlugin(Star):
                 selection_type = "次关键词匹配"
 
         if selected:
+            # 如果还没下载到本地，先下载
+            local_path = selected.get("local_path")
+            if not local_path or not os.path.exists(local_path):
+                download_success = await self.download_single_emoji(selected)
+                if not download_success:
+                    logger.warning(f"下载失败: {selected.get('name')}，跳过发送")
+                    return None
+
             self.add_to_recent_used(selected)
             logger.info(f"{selection_type} - {selected.get('name')}")
             return selected
