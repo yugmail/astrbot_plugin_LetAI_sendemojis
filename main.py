@@ -12,7 +12,7 @@ import asyncio
 import re
 import time
 
-@register("letai_sendemojis", "Heyh520", "让AI智能发送表情包的AstrBot插件", "1.0.0")
+@register("yu_letai_sendemojis", "yugmail", "【Yu魔改版】让AI智能发送自定义表情包", "1.1.0")
 class LetAISendEmojisPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
