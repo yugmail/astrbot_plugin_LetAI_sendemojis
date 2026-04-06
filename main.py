@@ -847,8 +847,8 @@ class LetAISendEmojisPlugin(Star):
         primary_keywords = mapping["primary"]
         secondary_keywords = mapping["secondary"]
         
-        # 增加多样性策略：有40%概率跳过本地搜索，直接在线下载新表情包（提高获取更多动漫表情包的机会）
-        force_download = random.random() < 0.4
+        # 已禁用强制跳过本地搜索，优先使用本地自定义表情包
+        force_download = False
         
         if not force_download:
             # 第一步：在已下载的本地文件中搜索（优先二次元）
@@ -910,9 +910,9 @@ class LetAISendEmojisPlugin(Star):
         # 按优先级返回本地表情包，并过滤最近使用过的
         all_local_candidates = local_perfect + local_good + local_anime + local_other
         
-        # 如果本地可选表情包太少（少于8个），返回None强制在线下载（提高阈值，增加在线下载频率）
-        if len(all_local_candidates) < 8:
-            logger.info(f"本地表情包数量不足({len(all_local_candidates)}<8)，强制在线下载新表情包")
+        # 降低门槛：只要有1个候选就使用本地表情包（适配小型自定义表情包库）
+        if len(all_local_candidates) < 1:
+            logger.info(f"本地表情包数量不足({len(all_local_candidates)}<1)，强制在线下载新表情包")
             return None
         
         selected = None
@@ -1119,9 +1119,9 @@ class LetAISendEmojisPlugin(Star):
         return extracted_emotions
     
     def is_anime_emoji(self, emoji_name, emoji_category, anime_categories):
-        """智能判断是否为动漫表情包（宽松模式，适配ChineseBQB数据源）"""
-        if not emoji_name and not emoji_category:
-            return False
+        """对自定义表情包始终返回True，跳过二次元过滤"""
+        # 自定义表情包库不需要二次元过滤，直接返回True
+        return True
             
         emoji_name_lower = emoji_name.lower() if emoji_name else ""
         emoji_category_lower = emoji_category.lower() if emoji_category else ""
